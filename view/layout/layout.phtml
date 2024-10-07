@@ -97,7 +97,7 @@ $userBar = $this->userBar();
                 <?php if ($this->themeSetting('logo')): ?>
                     <img src="<?php echo $this->themeSettingAssetUrl('logo'); ?>" alt="<?php echo $escape($siteTitle); ?>" />
                  <?php else: ?>
-                    <?php echo $escape($siteTitle); ?>
+                    <?php echo $escape($siteTitle); ?> <span class="beta">BETA</span>
                 <?php endif; ?>
                 </a>
             </h1>
