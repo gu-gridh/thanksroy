@@ -126,7 +126,8 @@ $userBar = $this->userBar();
                 </div>
                  <div class="links-stack">
                     <a class="site-link link show" href="#" id="privacy">Privacy Policy</a>
-                    <dialog id="matomo-opt-out">
+                    <dialog>
+                        <div id="matomo-opt-out"></div>
                         <script src="https://dh.gu.se/matomo/index.php?module=CoreAdminHome&action=optOutJS&divId=matomo-opt-out&language=auto&backgroundColor=FFFFFF&fontColor=000000&fontSize=1.5em&fontFamily=Barlow%20Condensed&showIntro=1"></script>
                         <button class="close">close</button>
                     </dialog>
@@ -144,13 +145,12 @@ $userBar = $this->userBar();
                 </a>
                 </div>
             </div>
-        </footer>        
+        </footer>
          <script type="text/javascript">        
     jQuery(document).ready(function () {
         ThanksRoy.mobileMenu();
         ThanksRoy.megaMenu('.no-touchevents #primary-nav');
     });
-    
     const dialog = document.querySelector("dialog");
     const showButton = document.querySelector("#privacy");
     const closeButton = document.querySelector("dialog button");
