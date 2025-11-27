@@ -1971,7 +1971,7 @@ template {
   min-width: 0;
 }
 
-/* Optional styling for the third column */
+/* Optional: style the third column a bit */
 .item-column-right {
   border-left: 1px solid #ddd;
   padding-left: 1rem;
