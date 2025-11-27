@@ -1962,16 +1962,17 @@ template {
 /* added by Kicki */
 
 .item-columns {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  display: flex;          /* put the three columns in a row */
   gap: 2rem;
+  align-items: flex-start;
 }
 
 .item-column {
+  flex: 1 1 0;
   min-width: 0;
 }
 
-/* Optional: style the third column a bit */
+/* Optional extra styling for the third column */
 .item-column-right {
   border-left: 1px solid #ddd;
   padding-left: 1rem;
