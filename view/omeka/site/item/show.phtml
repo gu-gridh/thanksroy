@@ -14,10 +14,6 @@ $valueLang = $filterLocale ? [$lang, ''] : null;
     <?php echo $this->resourcePageBlocks($item, 'left')->getBlocks(); ?>
   </div>
 
-  <div class="item-column item-column-middle">
-    <?php echo $this->resourcePageBlocks($item, 'middle')->getBlocks(); ?>
-  </div>
-
   <div class="item-column item-column-right">
     <?php if ($this->resourcePageBlocks($item, 'right')->hasBlocks()): ?>
       <?php echo $this->resourcePageBlocks($item, 'right')->getBlocks(); ?>

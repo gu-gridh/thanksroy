@@ -1962,22 +1962,11 @@ template {
 /* added by Kicki */
 
 .item-columns {
-  display: flex;          /* put the three columns in a row */
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* left wider, right narrower */
   gap: 2rem;
-  align-items: flex-start;
 }
 
 .item-column {
-  flex: 1 1 0;
   min-width: 0;
-}
-
-.item-column-middle {
-    max-width: 0px;
-}
-
-/* Optional extra styling for the third column */
-.item-column-right {
-  border-left: 1px solid #ddd;
-  padding-left: 1rem;
 }
