@@ -1964,8 +1964,8 @@ template {
 /* --- Two-column layout for item pages --- */
 .item-columns {
   display: grid;
-  grid-template-columns: 2fr 1fr; /* Left wider than right */
-  gap: 2rem;
+  grid-template-columns: 2fr 1fr; 
+  gap: 1rem;
   align-items: flex-start;
 }
 
@@ -1974,10 +1974,13 @@ template {
   min-width: 0;     /* prevents overflow */
 }
 
-/* Optional styling for the right column */
 .item-column-right {
-  border-left: 1px solid #ddd;
-  padding-left: 1rem;
+  
+}
+
+#resources-linked {
+    border-top: 0px;
+    max-width: 100%;
 }
 
 /* --- Responsive layout: stack columns on small screens --- */
@@ -1994,3 +1997,4 @@ template {
     padding-top: 1rem;
   }
 }
+
