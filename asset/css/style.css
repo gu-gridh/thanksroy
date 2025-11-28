@@ -1961,12 +1961,36 @@ template {
 
 /* added by Kicki */
 
+/* --- Two-column layout for item pages --- */
 .item-columns {
   display: grid;
-  grid-template-columns: 2fr 1fr; /* left wider, right narrower */
+  grid-template-columns: 2fr 1fr; /* Left wider than right */
   gap: 2rem;
+  align-items: flex-start;
 }
 
+/* Base column styling */
 .item-column {
-  min-width: 0;
+  min-width: 0;     /* prevents overflow */
+}
+
+/* Optional styling for the right column */
+.item-column-right {
+  border-left: 1px solid #ddd;
+  padding-left: 1rem;
+}
+
+/* --- Responsive layout: stack columns on small screens --- */
+@media (max-width: 900px) {
+  .item-columns {
+    grid-template-columns: 1fr; /* Single column on phones/tablets */
+    gap: 1.5rem;
+  }
+
+  .item-column-right {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid #ddd; /* optional divider for mobile */
+    padding-top: 1rem;
+  }
 }
