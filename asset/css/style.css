@@ -1983,7 +1983,6 @@ template {
     max-width: 100%;
 }
 
-/* --- Responsive layout: stack columns on small screens --- */
 @media (max-width: 900px) {
   .item-columns {
     grid-template-columns: 1fr; /* Single column on phones/tablets */
@@ -1993,8 +1992,30 @@ template {
   .item-column-right {
     border-left: none;
     padding-left: 0;
-    border-top: 1px solid #ddd; /* optional divider for mobile */
+    border-top: 1px solid #ddd; 
     padding-top: 1rem;
   }
 }
 
+/* test code for left columns width */
+/* Make metadata blocks in the left column use the full column width */
+.item-columns .item-column-left .resource-block,
+.item-columns .item-column-left dl,
+.item-columns .item-column-left .property,
+.item-columns .item-column-left .values {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  display: block;
+  box-sizing: border-box;
+}
+.item-columns .item-column-left dl,
+.item-columns .item-column-left dt,
+.item-columns .item-column-left dd {
+  float: none !important;
+  width: 100% !important;
+}
+.item-columns .item-column-left .resource-block {
+  padding-right: 1rem;
+}
