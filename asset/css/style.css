@@ -2020,6 +2020,6 @@ template {
   padding-right: 1rem;
 }
 
-.linked-resources th, td {
+.linked-resources table, thead, th, td {
     border: none;
 }
