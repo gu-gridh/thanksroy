@@ -2023,3 +2023,11 @@ template {
 .linked-resources table, thead, th, td {
     border: none;
 }
+
+.linked-resources thead {
+    display: none;
+}
+
+.linked-resource-property {
+    display: none;
+}
