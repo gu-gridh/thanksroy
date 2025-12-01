@@ -2024,8 +2024,15 @@ template {
     border: none;
 }
 
-.linked-resources thead {
-    display: none;
+.linked-resources table {
+    border: none !important;
+}
+
+.linked-resources 
+thead,
+thead tr,
+thead th {
+    display: none !important;
 }
 
 .linked-resource-property {
