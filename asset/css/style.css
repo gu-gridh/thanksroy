@@ -1965,7 +1965,7 @@ template {
 .item-columns {
   display: grid;
   grid-template-columns: 2fr 1fr; 
-  gap: 1rem;
+  gap: 5rem;
   align-items: flex-start;
 }
 
@@ -2018,4 +2018,8 @@ template {
 }
 .item-columns .item-column-left .resource-block {
   padding-right: 1rem;
+}
+
+.linked-resources th, td {
+    border: none;
 }
