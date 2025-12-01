@@ -2,103 +2,23 @@
 $translate = $this->plugin('translate');
 $this->headLink()->appendStylesheet($this->assetUrl('css/resource-page-blocks.css', 'Omeka'));
 $this->htmlElement('body')->appendAttribute('class', 'item resource show');
-
-$item = $this->resource ?? null; // make sure $item is defined
-
 $filterLocale = (bool) $this->siteSetting('filter_locale_values');
 $lang = $this->lang();
 $valueLang = $filterLocale ? [$lang, ''] : null;
 ?>
-
-<?php if ($item): ?>
-    <?php echo $this->pageTitle($item->displayTitle(null, $valueLang), 2); ?>
-<?php else: ?>
-    <?php echo $this->pageTitle('Resurs', 2); ?>
-<?php endif; ?>
-
+<?php echo $this->pageTitle($item->displayTitle(null, $valueLang), 2); ?>
 <?php $this->trigger('view.show.before'); ?>
-
-<?php
-// --- CUSTOM BLOCK FOR "Typ av förbud/censur" (dcterms:type) ---
-
-$types = [];
-if ($item && method_exists($item, 'values')) {
-    // Get ALL dcterms:type values (array of ValueRepresentation objects)
-    $types = $item->values('dcterms:type');
-}
-?>
-
-<?php if (!empty($types)): ?>
-    <div class="censor-type-block">
-        <h3>Typ av förbud/censur</h3>
-
-        <?php foreach ($types as $type): ?>
-            <?php
-            /** @var \Omeka\Api\Representation\ValueRepresentation $type */
-            $typeLabel = (string) $type;
-
-            // Try to get dcterms:description from the linked resource, if it IS a resource
-            $description = null;
-            $valueResource = $type->valueResource();
-            if ($valueResource && method_exists($valueResource, 'value')) {
-                $descValue = $valueResource->value('dcterms:description');
-                if ($descValue) {
-                    $description = (string) $descValue;
-                }
-            }
-            ?>
-            <div class="censor-type-value">
-                <?= $this->escapeHtml($typeLabel); ?>
-
-                <?php if ($description): ?>
-                    <button
-                        type="button"
-                        class="typ-forbud-help"
-                        aria-expanded="false"
-                    >
-                        ?
-                    </button>
-                    <div class="typ-forbud-help-text" hidden>
-                        <?= $this->escapeHtml($description); ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
-    </div>
-<?php endif; ?>
-<!-- --- END CUSTOM BLOCK --- -->
 
 <div class="item-columns">
   <div class="item-column item-column-left">
-    <?php if ($item): ?>
-        <?php echo $this->resourcePageBlocks($item, 'left')->getBlocks(); ?>
-    <?php endif; ?>
+    <?php echo $this->resourcePageBlocks($item, 'left')->getBlocks(); ?>
   </div>
 
   <div class="item-column item-column-right">
-    <?php if ($item && $this->resourcePageBlocks($item, 'right')->hasBlocks()): ?>
+    <?php if ($this->resourcePageBlocks($item, 'right')->hasBlocks()): ?>
       <?php echo $this->resourcePageBlocks($item, 'right')->getBlocks(); ?>
     <?php endif; ?>
   </div>
 </div>
 
 <?php $this->trigger('view.show.after'); ?>
-
-<script>
-document.addEventListener('click', function (e) {
-  if (!e.target.matches('.typ-forbud-help')) return;
-
-  var btn = e.target;
-  var box = btn.nextElementSibling;
-  if (!box) return;
-
-  var isHidden = box.hasAttribute('hidden');
-  if (isHidden) {
-    box.removeAttribute('hidden');
-    btn.setAttribute('aria-expanded', 'true');
-  } else {
-    box.setAttribute('hidden', '');
-    btn.setAttribute('aria-expanded', 'false');
-  }
-});
-</script>
