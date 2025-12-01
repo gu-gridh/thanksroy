@@ -2045,3 +2045,25 @@ thead th {
 .linked-resources table thead th {
   display: none !important;
 }
+
+.censor-type-block {
+  margin-bottom: 1.5em;
+}
+
+.censor-type-value {
+  margin-top: 0.25em;
+}
+
+.typ-forbud-help {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 0.3em;
+}
+
+.typ-forbud-help-text {
+  margin-top: 0.25em;
+  font-size: 0.9em;
+  font-style: italic;
+}

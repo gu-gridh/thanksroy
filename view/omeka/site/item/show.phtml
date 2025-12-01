@@ -2,12 +2,58 @@
 $translate = $this->plugin('translate');
 $this->headLink()->appendStylesheet($this->assetUrl('css/resource-page-blocks.css', 'Omeka'));
 $this->htmlElement('body')->appendAttribute('class', 'item resource show');
+
+$item = $this->resource; // make sure this line exists
 $filterLocale = (bool) $this->siteSetting('filter_locale_values');
 $lang = $this->lang();
 $valueLang = $filterLocale ? [$lang, ''] : null;
 ?>
+
 <?php echo $this->pageTitle($item->displayTitle(null, $valueLang), 2); ?>
 <?php $this->trigger('view.show.before'); ?>
+
+<?php
+// --- CUSTOM BLOCK FOR "Typ av förbud/censur" (dcterms:type) ---
+$types = $item->values('dcterms:type', ['lang' => $valueLang]);
+?>
+
+<?php if ($types): ?>
+  <div class="censor-type-block">
+    <h3>Typ av förbud/censur</h3>
+
+    <?php foreach ($types as $type): ?>
+      <?php
+      $typeLabel = (string) $type;
+
+      // Get dcterms:description from the linked resource, if any
+      $description = null;
+      if ($type->valueResource()) {
+          $descValue = $type->valueResource()->value('dcterms:description', ['lang' => $valueLang]);
+          if ($descValue) {
+              $description = (string) $descValue;
+          }
+      }
+      ?>
+      <div class="censor-type-value">
+        <?= $this->escapeHtml($typeLabel); ?>
+
+        <?php if ($description): ?>
+          <button
+            type="button"
+            class="typ-forbud-help"
+            aria-expanded="false"
+          >
+            ?
+          </button>
+          <div class="typ-forbud-help-text" hidden>
+            <?= $this->escapeHtml($description); ?>
+          </div>
+        <?php endif; ?>
+      </div>
+    <?php endforeach; ?>
+  </div>
+<?php endif; ?>
+<!-- --- END CUSTOM BLOCK --- -->
 
 <div class="item-columns">
   <div class="item-column item-column-left">
@@ -22,3 +68,22 @@ $valueLang = $filterLocale ? [$lang, ''] : null;
 </div>
 
 <?php $this->trigger('view.show.after'); ?>
+
+<script>
+document.addEventListener('click', function (e) {
+  if (!e.target.matches('.typ-forbud-help')) return;
+
+  var btn = e.target;
+  var box = btn.nextElementSibling;
+  if (!box) return;
+
+  var isHidden = box.hasAttribute('hidden');
+  if (isHidden) {
+    box.removeAttribute('hidden');
+    btn.setAttribute('aria-expanded', 'true');
+  } else {
+    box.setAttribute('hidden', '');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+});
+</script>
