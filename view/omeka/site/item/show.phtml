@@ -3,32 +3,35 @@ $translate = $this->plugin('translate');
 $this->headLink()->appendStylesheet($this->assetUrl('css/resource-page-blocks.css', 'Omeka'));
 $this->htmlElement('body')->appendAttribute('class', 'item resource show');
 
-$item = $this->resource; // make sure this line exists
 $filterLocale = (bool) $this->siteSetting('filter_locale_values');
 $lang = $this->lang();
 $valueLang = $filterLocale ? [$lang, ''] : null;
 ?>
-
 <?php echo $this->pageTitle($item->displayTitle(null, $valueLang), 2); ?>
 <?php $this->trigger('view.show.before'); ?>
 
 <?php
 // --- CUSTOM BLOCK FOR "Typ av förbud/censur" (dcterms:type) ---
-$types = $item->values('dcterms:type', ['lang' => $valueLang]);
+
+// Get ALL dcterms:type values.
+// This returns an array of ValueRepresentation objects (or an empty array).
+$types = $item->values('dcterms:type');
 ?>
 
-<?php if ($types): ?>
+<?php if (!empty($types)): ?>
   <div class="censor-type-block">
     <h3>Typ av förbud/censur</h3>
 
     <?php foreach ($types as $type): ?>
       <?php
+      /** @var \Omeka\Api\Representation\ValueRepresentation $type */
       $typeLabel = (string) $type;
 
-      // Get dcterms:description from the linked resource, if any
+      // Try to get dcterms:description from the linked resource, if it IS a resource
       $description = null;
-      if ($type->valueResource()) {
-          $descValue = $type->valueResource()->value('dcterms:description', ['lang' => $valueLang]);
+      $valueResource = $type->valueResource();
+      if ($valueResource) {
+          $descValue = $valueResource->value('dcterms:description');
           if ($descValue) {
               $description = (string) $descValue;
           }
@@ -53,8 +56,6 @@ $types = $item->values('dcterms:type', ['lang' => $valueLang]);
     <?php endforeach; ?>
   </div>
 <?php endif; ?>
-
-<?php echo '<div style="background: yellow; padding: 5px;">DEBUG: item show template loaded</div>'; ?>
 <!-- --- END CUSTOM BLOCK --- -->
 
 <div class="item-columns">
