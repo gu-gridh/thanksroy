@@ -2024,8 +2024,9 @@ template {
     border: none;
 }
 
-.linked-resources table {
+table {
     border: none !important;
+    border: 0px;
 }
 
 .linked-resources 
@@ -2037,4 +2038,10 @@ thead th {
 
 .linked-resource-property {
     display: none;
+}
+
+.linked-resources table thead,
+.linked-resources table thead tr,
+.linked-resources table thead th {
+  display: none !important;
 }
