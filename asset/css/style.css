@@ -2046,3 +2046,11 @@ thead th {
   display: none !important;
 }
 
+.linked-resources table {
+    margin-bottom: 0px;
+}
+
+.resource-class {
+    display: none;
+}
+
