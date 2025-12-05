@@ -1779,7 +1779,7 @@ template {
     }
 }
 
-@media screen and (min-width: 769px) {
+@media screen and (min-width: 1000px) {
     #wrap {
         max-width: 95em;
         margin: 0;
