@@ -65,7 +65,10 @@ foreach ($values as $term => $propertyData):
         $class = ['value'];
         if ('resource' == $valueType || strpos($valueType, 'resource') !== false) {
             $class[] = 'resource';
-            $class[] = $escape($value->valueResource()->resourceName());
+            $valueResource = $value->valueResource();
+            if ($valueResource) {
+                $class[] = $escape($valueResource->resourceName());
+            }
         } elseif ('uri' == $valueType) {
             $class[] = 'uri';
         }
@@ -83,6 +86,8 @@ foreach ($values as $term => $propertyData):
 
     <div class="value-content">
         <?php
+        $renderedCustom = false;
+
         if (strpos($valueType, 'resource') !== false && $value->valueResource()) {
             $related = $value->valueResource();
 
@@ -92,37 +97,74 @@ foreach ($values as $term => $propertyData):
                 'dcterms:type',
             ];
 
-            echo '<div class="related-main">';
-            echo '<a href="' . $escape($related->siteUrl()) . '">';
-            echo $escape($related->displayTitle());
-            echo '</a>';
-            echo '</div>';
+            // Collect visible related values first.
+            $visibleRelatedFields = [];
 
-            echo '<div class="related-resource-meta">';
             foreach ($fields as $term) {
                 $relatedValues = $related->value($term, ['all' => true]);
-                if (!empty($relatedValues)) {
-                    echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $term) . '">';
-                    echo '<span class="related-label">' . $escape($relatedPropertyLabels[$term] ?? $term) . ':</span>';
 
-                    foreach ($relatedValues as $relatedValue) {
-                        if (is_object($relatedValue) && method_exists($relatedValue, 'asHtml')) {
-                            echo '<div class="related-value">' . $relatedValue->asHtml() . '</div>';
-                        }
+                if (!is_array($relatedValues) || empty($relatedValues)) {
+                    continue;
+                }
+
+                $usableValues = [];
+                foreach ($relatedValues as $relatedValue) {
+                    if (is_object($relatedValue) && method_exists($relatedValue, 'asHtml')) {
+                        $usableValues[] = $relatedValue;
+                    }
+                }
+
+                if (!empty($usableValues)) {
+                    $visibleRelatedFields[$term] = $usableValues;
+                }
+            }
+
+            // Only use custom output if we have something real to show.
+            if (!empty($visibleRelatedFields)) {
+                $renderedCustom = true;
+
+                echo '<div class="related-main">';
+                echo '<a href="' . $escape($related->siteUrl()) . '">';
+                echo $escape($related->displayTitle());
+                echo '</a>';
+                echo '</div>';
+
+                echo '<div class="related-resource-meta">';
+
+                foreach ($visibleRelatedFields as $term => $usableValues) {
+                    try {
+                        $propertyResource = $this->api()->searchOne('properties', ['term' => $term])->getContent();
+                        $label = $propertyResource ? $translate($propertyResource->label()) : $term;
+                    } catch (\Exception $e) {
+                        $label = $term;
+                    }
+
+                    echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $term) . '">';
+                    echo '<span class="related-label">' . $escape($label) . ':</span>';
+
+                    foreach ($usableValues as $relatedValue) {
+                        echo '<div class="related-value">' . $relatedValue->asHtml() . '</div>';
                     }
 
                     echo '</div>';
                 }
+
+                echo '</div>';
             }
-            echo '</div>';
-        } else {
+        }
+
+        // Fallback to normal Omeka output if no visible related values were available.
+        if (!$renderedCustom) {
             echo $filterLocale ? $value->asHtml($lang) : $value->asHtml();
         }
         ?>
     </div>
 
     <?php if (!$value->isPublic()): ?>
-        <span class="o-icon-private" role="img" title="<?php echo $this->escapeHtml($translate('Private')); ?>" aria-label="<?php echo $this->escapeHtml($translate('Private')); ?>"></span>
+        <span class="o-icon-private" role="img"
+            title="<?php echo $this->escapeHtml($translate('Private')); ?>"
+            aria-label="<?php echo $this->escapeHtml($translate('Private')); ?>">
+        </span>
     <?php endif; ?>
 
     <?php $this->trigger('view.show.value', ['value' => $value]); ?>
