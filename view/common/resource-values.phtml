@@ -12,6 +12,22 @@ $filterLocaleCallback = function ($value) use ($lang) {
     $valueLang = $value->lang();
     return $valueLang == '' || strcasecmp($valueLang, $lang) === 0;
 };
+
+$relatedPropertyLabels = [];
+
+$relatedTerms = [
+    'dcterms:spatial',
+    'bf:temporalCoverage',
+    'dcterms:type',
+];
+foreach ($relatedTerms as $relatedTerm) {
+    try {
+        $propertyResource = $this->api()->searchOne('properties', ['term' => $relatedTerm])->getContent();
+        $relatedPropertyLabels[$relatedTerm] = $translate($propertyResource->label());
+    } catch (\Exception $e) {
+        $relatedPropertyLabels[$relatedTerm] = $relatedTerm;
+    }
+}
 ?>
 
 <dl>
@@ -71,9 +87,9 @@ foreach ($values as $term => $propertyData):
             $related = $value->valueResource();
 
             $fields = [
-                'dcterms:spatial' => $translate('Spatial'),
-                'bf:temporalCoverage' => $translate('Temporal coverage'),
-                'dcterms:type' => $translate('Type'),
+                'dcterms:spatial',
+                'bf:temporalCoverage',
+                'dcterms:type',
             ];
 
             echo '<div class="related-main">';
@@ -83,16 +99,18 @@ foreach ($values as $term => $propertyData):
             echo '</div>';
 
             echo '<div class="related-resource-meta">';
-            foreach ($fields as $term => $label) {
+            foreach ($fields as $term) {
                 $relatedValues = $related->value($term, ['all' => true]);
                 if (!empty($relatedValues)) {
-                    echo '<div class="related-field related-field-' . str_replace(':', '-', $term) . '">';
-                    echo '<span class="related-label">' . $escape($label) . ':</span>';
+                    echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $term) . '">';
+                    echo '<span class="related-label">' . $escape($relatedPropertyLabels[$term] ?? $term) . ':</span>';
+
                     foreach ($relatedValues as $relatedValue) {
                         if (is_object($relatedValue) && method_exists($relatedValue, 'asHtml')) {
                             echo '<div class="related-value">' . $relatedValue->asHtml() . '</div>';
                         }
                     }
+
                     echo '</div>';
                 }
             }
