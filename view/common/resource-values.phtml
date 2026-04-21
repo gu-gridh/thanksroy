@@ -67,65 +67,70 @@ foreach ($values as $term => $propertyData):
 
     <div class="value-content">
         <?php
-            if (strpos($valueType, 'resource') !== false && $value->valueResource()) {
-                $related = $value->valueResource();
+        if (strpos($valueType, 'resource') !== false && $value->valueResource()) {
+            $related = $value->valueResource();
 
-                // Link to the related item
-                echo '<div class="related-main">';
-                echo '<a href="' . $escape($related->siteUrl()) . '">';
-                echo $escape($related->displayTitle());
-                echo '</a>';
-                echo '</div>';
+            echo '<div class="related-main">';
+            echo '<a href="' . $escape($related->siteUrl()) . '">';
+            echo $escape($related->displayTitle());
+            echo '</a>';
+            echo '</div>';
 
-                // Fetch related properties
-                $spatials = $related->values('dcterms:spatial');
-                $temporals = $related->values('bf:temporalCoverage');
-                $types = $related->values('dcterms:type');
+            $spatials = $related->value('dcterms:spatial', ['all' => true]);
+            $temporals = $related->value('bf:temporalCoverage', ['all' => true]);
+            $types = $related->value('dcterms:type', ['all' => true]);
 
-                if ($spatials || $temporals || $types) {
-                    echo '<div class="related-resource-meta">';
+            if ($spatials || $temporals || $types) {
+                echo '<div class="related-resource-meta">';
 
-                    if ($spatials) {
-                        echo '<div class="related-field related-spatial">';
-                        echo '<span class="related-label">Spatial:</span>';
-                        foreach ($spatials as $v) {
+                if (!empty($spatials)) {
+                    echo '<div class="related-field related-spatial">';
+                    echo '<span class="related-label">Spatial:</span>';
+                    foreach ($spatials as $v) {
+                        if (is_object($v) && method_exists($v, 'asHtml')) {
                             echo '<div class="related-value">' . $v->asHtml() . '</div>';
                         }
-                        echo '</div>';
                     }
-
-                    if ($temporals) {
-                        echo '<div class="related-field related-temporal">';
-                        echo '<span class="related-label">Temporal coverage:</span>';
-                        foreach ($temporals as $v) {
-                            echo '<div class="related-value">' . $v->asHtml() . '</div>';
-                        }
-                        echo '</div>';
-                    }
-
-                    if ($types) {
-                        echo '<div class="related-field related-type">';
-                        echo '<span class="related-label">Type:</span>';
-                        foreach ($types as $v) {
-                            echo '<div class="related-value">' . $v->asHtml() . '</div>';
-                        }
-                        echo '</div>';
-                    }
-
                     echo '</div>';
                 }
-            } else {
-                echo $filterLocale ? $value->asHtml($lang) : $value->asHtml();
+
+                if (!empty($temporals)) {
+                    echo '<div class="related-field related-temporal">';
+                    echo '<span class="related-label">Temporal coverage:</span>';
+                    foreach ($temporals as $v) {
+                        if (is_object($v) && method_exists($v, 'asHtml')) {
+                            echo '<div class="related-value">' . $v->asHtml() . '</div>';
+                        }
+                    }
+                    echo '</div>';
+                }
+
+                if (!empty($types)) {
+                    echo '<div class="related-field related-type">';
+                    echo '<span class="related-label">Type:</span>';
+                    foreach ($types as $v) {
+                        if (is_object($v) && method_exists($v, 'asHtml')) {
+                            echo '<div class="related-value">' . $v->asHtml() . '</div>';
+                        }
+                    }
+                    echo '</div>';
+                }
+
+                echo '</div>';
             }
-            ?>
-        </div>
+        } else {
+            echo $filterLocale ? $value->asHtml($lang) : $value->asHtml();
+        }
+        ?>
+    </div>
 
-        <?php if (!$value->isPublic()): ?>
-            <span class="o-icon-private" role="img" title="<?php echo $this->escapeHtml($translate('Private')); ?>" aria-label="<?php echo $this->escapeHtml($translate('Private')); ?>"></span>
-        <?php endif; ?>
+    <?php if (!$value->isPublic()): ?>
+        <span class="o-icon-private" role="img" title="<?php echo $this->escapeHtml($translate('Private')); ?>" aria-label="<?php echo $this->escapeHtml($translate('Private')); ?>"></span>
+    <?php endif; ?>
 
-        <?php $this->trigger('view.show.value', ['value' => $value]); ?>
-    </dd>
+    <?php $this->trigger('view.show.value', ['value' => $value]); ?>
+</dd>
+
         <?php endforeach; ?>
     </div>
 <?php endforeach; ?>
