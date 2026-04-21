@@ -70,54 +70,33 @@ foreach ($values as $term => $propertyData):
         if (strpos($valueType, 'resource') !== false && $value->valueResource()) {
             $related = $value->valueResource();
 
+            $fields = [
+                'dcterms:spatial' => $translate('Spatial'),
+                'bf:temporalCoverage' => $translate('Temporal coverage'),
+                'dcterms:type' => $translate('Type'),
+            ];
+
             echo '<div class="related-main">';
             echo '<a href="' . $escape($related->siteUrl()) . '">';
             echo $escape($related->displayTitle());
             echo '</a>';
             echo '</div>';
 
-            $spatials = $related->value('dcterms:spatial', ['all' => true]);
-            $temporals = $related->value('bf:temporalCoverage', ['all' => true]);
-            $types = $related->value('dcterms:type', ['all' => true]);
-
-            if ($spatials || $temporals || $types) {
-                echo '<div class="related-resource-meta">';
-
-                if (!empty($spatials)) {
-                    echo '<div class="related-field related-spatial">';
-                    echo '<span class="related-label">Spatial:</span>';
-                    foreach ($spatials as $v) {
-                        if (is_object($v) && method_exists($v, 'asHtml')) {
-                            echo '<div class="related-value">' . $v->asHtml() . '</div>';
+            echo '<div class="related-resource-meta">';
+            foreach ($fields as $term => $label) {
+                $relatedValues = $related->value($term, ['all' => true]);
+                if (!empty($relatedValues)) {
+                    echo '<div class="related-field related-field-' . str_replace(':', '-', $term) . '">';
+                    echo '<span class="related-label">' . $escape($label) . ':</span>';
+                    foreach ($relatedValues as $relatedValue) {
+                        if (is_object($relatedValue) && method_exists($relatedValue, 'asHtml')) {
+                            echo '<div class="related-value">' . $relatedValue->asHtml() . '</div>';
                         }
                     }
                     echo '</div>';
                 }
-
-                if (!empty($temporals)) {
-                    echo '<div class="related-field related-temporal">';
-                    echo '<span class="related-label">Temporal coverage:</span>';
-                    foreach ($temporals as $v) {
-                        if (is_object($v) && method_exists($v, 'asHtml')) {
-                            echo '<div class="related-value">' . $v->asHtml() . '</div>';
-                        }
-                    }
-                    echo '</div>';
-                }
-
-                if (!empty($types)) {
-                    echo '<div class="related-field related-type">';
-                    echo '<span class="related-label">Type:</span>';
-                    foreach ($types as $v) {
-                        if (is_object($v) && method_exists($v, 'asHtml')) {
-                            echo '<div class="related-value">' . $v->asHtml() . '</div>';
-                        }
-                    }
-                    echo '</div>';
-                }
-
-                echo '</div>';
             }
+            echo '</div>';
         } else {
             echo $filterLocale ? $value->asHtml($lang) : $value->asHtml();
         }
