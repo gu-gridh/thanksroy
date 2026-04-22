@@ -97,7 +97,6 @@ foreach ($values as $term => $propertyData):
                 'dcterms:type',
             ];
 
-            // Collect visible related values first.
             $visibleRelatedFields = [];
 
             foreach ($fields as $term) {
@@ -119,7 +118,6 @@ foreach ($values as $term => $propertyData):
                 }
             }
 
-            // Only use custom output if we have something real to show.
             if (!empty($visibleRelatedFields)) {
                 $renderedCustom = true;
 
@@ -132,12 +130,7 @@ foreach ($values as $term => $propertyData):
                 echo '<div class="related-resource-meta">';
 
                 foreach ($visibleRelatedFields as $term => $usableValues) {
-                    try {
-                        $propertyResource = $this->api()->searchOne('properties', ['term' => $term])->getContent();
-                        $label = $propertyResource ? $translate($propertyResource->label()) : $term;
-                    } catch (\Exception $e) {
-                        $label = $term;
-                    }
+                    $label = $relatedPropertyLabels[$term] ?? $term;
 
                     echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $term) . '">';
                     echo '<span class="related-label">' . $escape($label) . ':</span>';
@@ -153,7 +146,6 @@ foreach ($values as $term => $propertyData):
             }
         }
 
-        // Fallback to normal Omeka output if no visible related values were available.
         if (!$renderedCustom) {
             echo $filterLocale ? $value->asHtml($lang) : $value->asHtml();
         }
