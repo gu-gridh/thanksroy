@@ -10,20 +10,22 @@ $lang = $this->lang();
 
 $filterLocaleCallback = function ($value) use ($lang) {
     $valueLang = $value->lang();
-    return $valueLang == '' || strcasecmp($valueLang, $lang) === 0;
+    return $valueLang === '' || strcasecmp($valueLang, $lang) === 0;
 };
-
-$relatedPropertyLabels = [];
 
 $relatedTerms = [
     'dcterms:spatial',
     'bf:temporalCoverage',
     'dcterms:type',
 ];
+
+$relatedPropertyLabels = [];
 foreach ($relatedTerms as $relatedTerm) {
     try {
-        $propertyResource = $this->api()->searchOne('properties', ['term' => $relatedTerm])->getContent();
-        $relatedPropertyLabels[$relatedTerm] = $translate($propertyResource->label());
+        $property = $this->api()->searchOne('properties', ['term' => $relatedTerm])->getContent();
+        $relatedPropertyLabels[$relatedTerm] = $property
+            ? $translate($property->label())
+            : $relatedTerm;
     } catch (\Exception $e) {
         $relatedPropertyLabels[$relatedTerm] = $relatedTerm;
     }
@@ -31,144 +33,134 @@ foreach ($relatedTerms as $relatedTerm) {
 ?>
 
 <dl>
-<?php
-foreach ($values as $term => $propertyData):
+<?php foreach ($values as $propertyTerm => $propertyData): ?>
+    <?php
     $propertyValues = $propertyData['values'];
+
     if ($filterLocale) {
         $propertyValues = array_filter($propertyValues, $filterLocaleCallback);
     }
-    if (!$propertyValues) {
+
+    if (empty($propertyValues)) {
         continue;
     }
+
     $property = $propertyData['property'];
     $propertyLabel = $propertyData['alternate_label'] ?: $translate($property->label());
-    if ('term' === $labelInfo) {
-        $propertyTerm = $property->term();
-    } elseif ('vocab' === $labelInfo) {
-        $propertyTerm = $property->vocabulary()->label();
+
+    if ($labelInfo === 'term') {
+        $propertyInfo = $property->term();
+    } elseif ($labelInfo === 'vocab') {
+        $propertyInfo = $property->vocabulary()->label();
     } else {
-        $propertyTerm = null;
+        $propertyInfo = null;
     }
-?>
+    ?>
+
     <div class="property">
         <dt>
-        <?php echo $escape($propertyLabel); ?>
-        <?php if ($propertyTerm !== null): ?>
-        <span class="field-term">(<?php echo $escape($propertyTerm); ?>)</span>
-        <?php endif; ?>
+            <?php echo $escape($propertyLabel); ?>
+            <?php if ($propertyInfo !== null): ?>
+                <span class="field-term">(<?php echo $escape($propertyInfo); ?>)</span>
+            <?php endif; ?>
         </dt>
+
         <?php foreach ($propertyValues as $value): ?>
-        <?php
-        $valueType = $value->type();
-        $valueLang = $value->lang();
-        $valueAnnotation = $value->valueAnnotation();
-        $class = ['value'];
-        if ('resource' == $valueType || strpos($valueType, 'resource') !== false) {
-            $class[] = 'resource';
-            $valueResource = $value->valueResource();
-            if ($valueResource) {
-                $class[] = $escape($valueResource->resourceName());
-            }
-        } elseif ('uri' == $valueType) {
-            $class[] = 'uri';
-        }
-        ?>
-        <dd class="<?php echo implode(' ', $class); ?>" lang="<?php echo $escape($valueLang); ?>">
-    <?php if ($showLocale && $valueLang): ?>
-    <span class="language"><?php echo $valueLang; ?></span>
-    <?php endif; ?>
+            <?php
+            $valueType = $value->type();
+            $valueLang = $value->lang();
+            $valueAnnotation = $value->valueAnnotation();
+            $valueResource = null;
 
-    <?php if ($valueAnnotation && $showValueAnnotations): ?>
-        <div class="annotation">
-            <?php echo $valueAnnotation->displayValues(); ?>
-        </div>
-    <?php endif; ?>
+            $classes = ['value'];
 
-    <div class="value-content">
-        <?php
-        $renderedCustom = false;
-
-        if (strpos($valueType, 'resource') !== false && $value->valueResource()) {
-            $related = $value->valueResource();
-
-            $fields = [
-                'dcterms:spatial',
-                'bf:temporalCoverage',
-                'dcterms:type',
-            ];
-
-            $visibleRelatedFields = [];
-
-            foreach ($fields as $term) {
-                $relatedValues = $related->value($term, ['all' => true]);
-
-                if (!is_array($relatedValues) || empty($relatedValues)) {
-                    continue;
+            if ($valueType === 'resource' || strpos($valueType, 'resource') !== false) {
+                $classes[] = 'resource';
+                $valueResource = $value->valueResource();
+                if ($valueResource) {
+                    $classes[] = $escape($valueResource->resourceName());
                 }
+            } elseif ($valueType === 'uri') {
+                $classes[] = 'uri';
+            }
+            ?>
 
-                $usableValues = [];
-                foreach ($relatedValues as $relatedValue) {
-                    if (is_object($relatedValue) && method_exists($relatedValue, 'asHtml')) {
-                        $usableValues[] = $relatedValue;
+            <dd class="<?php echo implode(' ', $classes); ?>" lang="<?php echo $escape($valueLang); ?>">
+                <?php if ($showLocale && $valueLang): ?>
+                    <span class="language"><?php echo $valueLang; ?></span>
+                <?php endif; ?>
+
+                <?php if ($valueAnnotation && $showValueAnnotations): ?>
+                    <div class="annotation">
+                        <?php echo $valueAnnotation->displayValues(); ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="value-content">
+                    <?php
+                    $renderedCustom = false;
+
+                    if ($valueResource) {
+                        $visibleRelatedFields = [];
+
+                        foreach ($relatedTerms as $relatedTerm) {
+                            $relatedValues = $valueResource->value($relatedTerm, ['all' => true]);
+
+                            if (!is_array($relatedValues) || empty($relatedValues)) {
+                                continue;
+                            }
+
+                            $usableValues = [];
+                            foreach ($relatedValues as $relatedValue) {
+                                if (is_object($relatedValue) && method_exists($relatedValue, 'asHtml')) {
+                                    $usableValues[] = $relatedValue->asHtml();
+                                }
+                            }
+
+                            if (!empty($usableValues)) {
+                                $visibleRelatedFields[$relatedTerm] = $usableValues;
+                            }
+                        }
+
+                        if (!empty($visibleRelatedFields)) {
+                            $renderedCustom = true;
+
+                            echo '<div class="related-main">';
+                            echo '<a href="' . $escape($valueResource->siteUrl()) . '">';
+                            echo $escape($valueResource->displayTitle());
+                            echo '</a>';
+                            echo '</div>';
+
+                            echo '<div class="related-resource-meta">';
+
+                            foreach ($visibleRelatedFields as $relatedTerm => $usableValues) {
+                                $label = $relatedPropertyLabels[$relatedTerm] ?? $relatedTerm;
+
+                                echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $relatedTerm) . '">';
+                                echo '<span class="related-label">' . $escape($label) . ':</span> ';
+                                echo '<span class="related-value">' . implode(', ', $usableValues) . '</span>';
+                                echo '</div>';
+                            }
+
+                            echo '</div>';
+                        }
                     }
-                }
 
-                if (!empty($usableValues)) {
-                    $visibleRelatedFields[$term] = $usableValues;
-                }
-            }
-
-            if (!empty($visibleRelatedFields)) {
-                $renderedCustom = true;
-
-                echo '<div class="related-main">';
-                echo '<a href="' . $escape($related->siteUrl()) . '">';
-                echo $escape($related->displayTitle());
-                echo '</a>';
-                echo '</div>';
-
-                echo '<div class="related-resource-meta">';
-
-                foreach ($visibleRelatedFields as $term => $usableValues) {
-                $label = $relatedPropertyLabels[$term] ?? $term;
-
-                $vals = [];
-                foreach ($usableValues as $relatedValue) {
-                    if (is_object($relatedValue) && method_exists($relatedValue, 'asHtml')) {
-                        $vals[] = $relatedValue->asHtml();
+                    if (!$renderedCustom) {
+                        echo $filterLocale ? $value->asHtml($lang) : $value->asHtml();
                     }
-                }
+                    ?>
+                </div>
 
-                if (empty($vals)) {
-                    continue;
-                }
+                <?php if (!$value->isPublic()): ?>
+                    <span class="o-icon-private" role="img"
+                        title="<?php echo $escape($translate('Private')); ?>"
+                        aria-label="<?php echo $escape($translate('Private')); ?>">
+                    </span>
+                <?php endif; ?>
 
-                echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $term) . '">';
-                echo '<span class="related-label">' . $escape($label) . ':</span> ';
-                echo '<span class="related-value">' . implode(', ', $vals) . '</span>';
-                echo '</div>';
-            }
-
-                echo '</div>';
-            }
-        }
-
-        if (!$renderedCustom) {
-            echo $filterLocale ? $value->asHtml($lang) : $value->asHtml();
-        }
-        ?>
-    </div>
-
-    <?php if (!$value->isPublic()): ?>
-        <span class="o-icon-private" role="img"
-            title="<?php echo $this->escapeHtml($translate('Private')); ?>"
-            aria-label="<?php echo $this->escapeHtml($translate('Private')); ?>">
-        </span>
-    <?php endif; ?>
-
-    <?php $this->trigger('view.show.value', ['value' => $value]); ?>
-</dd>
-
+                <?php $this->trigger('view.show.value', ['value' => $value]); ?>
+            </dd>
         <?php endforeach; ?>
     </div>
 <?php endforeach; ?>
