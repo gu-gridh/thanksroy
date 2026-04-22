@@ -130,17 +130,24 @@ foreach ($values as $term => $propertyData):
                 echo '<div class="related-resource-meta">';
 
                 foreach ($visibleRelatedFields as $term => $usableValues) {
-                    $label = $relatedPropertyLabels[$term] ?? $term;
+                $label = $relatedPropertyLabels[$term] ?? $term;
 
-                    echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $term) . '">';
-                    echo '<span class="related-label">' . $escape($label) . ':</span>';
-
-                    foreach ($usableValues as $relatedValue) {
-                        echo '<div class="related-value">' . $relatedValue->asHtml() . '</div>';
+                $vals = [];
+                foreach ($usableValues as $relatedValue) {
+                    if (is_object($relatedValue) && method_exists($relatedValue, 'asHtml')) {
+                        $vals[] = $relatedValue->asHtml();
                     }
-
-                    echo '</div>';
                 }
+
+                if (empty($vals)) {
+                    continue;
+                }
+
+                echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $term) . '">';
+                echo '<span class="related-label">' . $escape($label) . ':</span> ';
+                echo '<span class="related-value">' . implode(', ', $vals) . '</span>';
+                echo '</div>';
+            }
 
                 echo '</div>';
             }
