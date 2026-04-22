@@ -7,12 +7,8 @@ $showLocale = (bool) $this->fallbackSetting('show_locale_label', ['site'], true)
 $filterLocale = (bool) $this->fallbackSetting('filter_locale_values', ['site'], false);
 $showValueAnnotations = (bool) $this->fallbackSetting('show_value_annotations', ['site'], true);
 $lang = $this->lang();
-$customRelatedPropertyTerm = 'rico:isAssociatedWithEvent';
 
-$filterLocaleCallback = function ($value) use ($lang) {
-    $valueLang = $value->lang();
-    return $valueLang === '' || strcasecmp($valueLang, $lang) === 0;
-};
+$customRelatedPropertyTerm = 'rico:isAssociatedWithEvent';
 
 $relatedTerms = [
     'dcterms:spatial',
@@ -23,30 +19,36 @@ $relatedTerms = [
 $relatedPropertyLabels = [];
 foreach ($relatedTerms as $relatedTerm) {
     try {
-        $property = $this->api()->searchOne('properties', ['term' => $relatedTerm])->getContent();
-        $relatedPropertyLabels[$relatedTerm] = $property
-            ? $translate($property->label())
+        $relatedProperty = $this->api()->searchOne('properties', ['term' => $relatedTerm])->getContent();
+        $relatedPropertyLabels[$relatedTerm] = $relatedProperty
+            ? $translate($relatedProperty->label())
             : $relatedTerm;
     } catch (\Exception $e) {
         $relatedPropertyLabels[$relatedTerm] = $relatedTerm;
     }
 }
+
+$filterLocaleCallback = function ($value) use ($lang) {
+    $valueLang = $value->lang();
+    return $valueLang === '' || strcasecmp($valueLang, $lang) === 0;
+};
 ?>
 
 <dl>
-<?php foreach ($values as $propertyTerm => $propertyData): ?>
+<?php foreach ($values as $unusedTerm => $propertyData): ?>
     <?php
-    $propertyValues = $propertyData['values'];
+    $property = $propertyData['property'];
+    $currentPropertyTerm = $property->term();
+    $showRelatedEventMeta = ($currentPropertyTerm === $customRelatedPropertyTerm);
 
+    $propertyValues = $propertyData['values'];
     if ($filterLocale) {
         $propertyValues = array_filter($propertyValues, $filterLocaleCallback);
     }
-
     if (empty($propertyValues)) {
         continue;
     }
 
-    $property = $propertyData['property'];
     $propertyLabel = $propertyData['alternate_label'] ?: $translate($property->label());
 
     if ($labelInfo === 'term') {
@@ -101,7 +103,7 @@ foreach ($relatedTerms as $relatedTerm) {
                     <?php
                     $renderedCustom = false;
 
-                    if ($valueResource && $propertyTerm === $customRelatedPropertyTerm) {
+                    if ($valueResource && $showRelatedEventMeta) {
                         $visibleRelatedFields = [];
 
                         foreach ($relatedTerms as $relatedTerm) {
@@ -133,7 +135,6 @@ foreach ($relatedTerms as $relatedTerm) {
                             echo '</div>';
 
                             echo '<div class="related-resource-meta">';
-
                             foreach ($visibleRelatedFields as $relatedTerm => $usableValues) {
                                 $label = $relatedPropertyLabels[$relatedTerm] ?? $relatedTerm;
 
@@ -142,7 +143,6 @@ foreach ($relatedTerms as $relatedTerm) {
                                 echo '<span class="related-value">' . implode(', ', $usableValues) . '</span>';
                                 echo '</div>';
                             }
-
                             echo '</div>';
                         }
                     }
