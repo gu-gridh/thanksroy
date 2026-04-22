@@ -140,7 +140,7 @@ $filterLocaleCallback = function ($value) use ($lang) {
 
                                 echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $relatedTerm) . '">';
                                 echo '<span class="related-label">' . $escape($label) . ':</span> ';
-                                echo '<span class="related-value">' . implode(', ', $usableValues) . '</span>';
+                                echo '<span class="related-value">' . implode('', $usableValues) . '</span>';
                                 echo '</div>';
                             }
                             echo '</div>';
