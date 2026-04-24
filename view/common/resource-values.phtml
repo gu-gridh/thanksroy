@@ -138,51 +138,54 @@ $filterLocaleCallback = function ($value) use ($lang) {
 
                             echo '<div class="related-resource-meta">';
                             foreach ($visibleRelatedFields as $relatedTerm => $usableValues) {
-                                $label = $relatedPropertyLabels[$relatedTerm] ?? $relatedTerm;
-                                $definitionText = '';
+    $label = $relatedPropertyLabels[$relatedTerm] ?? $relatedTerm;
+    $definitionText = '';
 
-                                if ($relatedTerm === $typeTerm) {
-                                    $definitions = [];
+    if ($relatedTerm === $typeTerm) {
+        $definitions = [];
 
-                                    foreach ($usableValues as $relatedValue) {
-                                        $typeResource = $relatedValue->valueResource();
+        foreach ($usableValues as $relatedValue) {
+            if (method_exists($relatedValue, 'valueResource') && $relatedValue->valueResource()) {
+                $typeResource = $relatedValue->valueResource();
+                $definitionValues = $typeResource->value('skos:definition', ['all' => true]);
 
-                                        if ($typeResource) {
-                                            $definitionValues = $typeResource->value('skos:definition', ['all' => true]);
-
-                                            if (is_array($definitionValues)) {
-                                                foreach ($definitionValues as $definitionValue) {
-                                                    if (is_object($definitionValue) && method_exists($definitionValue, 'asHtml')) {
-                                                        $definitions[] = trim(strip_tags($definitionValue->asHtml()));
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    $definitionText = implode("\n", array_filter($definitions));
-                                }
-
-                                echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $relatedTerm) . '">';
-                                echo '<span class="related-label">' . $escape($label) . ':</span>';
-
-                                if ($relatedTerm === $typeTerm && $definitionText !== '') {
-                                    echo ' <span class="type-help" tabindex="0" title="' . $escape($definitionText) . '">?</span>';
-                                }
-
-                                echo ' <span class="related-value">';
-
-                            $valueHtml = [];
-                            foreach ($usableValues as $relatedValue) {
-                                if (is_object($relatedValue) && method_exists($relatedValue, 'asHtml')) {
-                                    $valueHtml[] = $relatedValue->asHtml();
-                                }
-                            }
-
-                            echo implode(', ', $valueHtml);
-                            echo '</span>';
-                            echo '</div>';
+                if (is_array($definitionValues)) {
+                    foreach ($definitionValues as $definitionValue) {
+                        if (is_object($definitionValue) && method_exists($definitionValue, 'asHtml')) {
+                            $definitions[] = trim(strip_tags($definitionValue->asHtml()));
                         }
+                    }
+                }
+            }
+        }
+
+        $definitionText = implode("\n", array_filter($definitions));
+
+        if ($definitionText === '') {
+            $definitionText = $translate('No definition available.');
+        }
+    }
+
+    echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $relatedTerm) . '">';
+    echo '<span class="related-label">' . $escape($label) . ':</span>';
+
+    if ($relatedTerm === $typeTerm) {
+        echo ' <span class="type-help" tabindex="0" title="' . $escape($definitionText) . '">?</span>';
+    }
+
+    echo ' <span class="related-value">';
+
+    $valueHtml = [];
+    foreach ($usableValues as $relatedValue) {
+        if (is_object($relatedValue) && method_exists($relatedValue, 'asHtml')) {
+            $valueHtml[] = $relatedValue->asHtml();
+        }
+    }
+
+    echo implode(', ', $valueHtml);
+    echo '</span>';
+    echo '</div>';
+}
                             echo '</div>';
                         }
                     }
