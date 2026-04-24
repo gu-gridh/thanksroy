@@ -192,6 +192,25 @@ $filterLocaleCallback = function ($value) use ($lang) {
 
                     if (!$renderedCustom) {
                         echo $filterLocale ? $value->asHtml($lang) : $value->asHtml();
+
+                        if ($currentPropertyTerm === 'dcterms:type' && $valueResource) {
+                            $definitionValues = $valueResource->value('skos:definition', ['all' => true]);
+                            $definitions = [];
+
+                            if (is_array($definitionValues)) {
+                                foreach ($definitionValues as $definitionValue) {
+                                    if (is_object($definitionValue) && method_exists($definitionValue, 'asHtml')) {
+                                        $definitions[] = trim(strip_tags($definitionValue->asHtml()));
+                                    }
+                                }
+                            }
+
+                            $definitionText = implode("\n", array_filter($definitions));
+
+                            if ($definitionText !== '') {
+                                echo ' <span class="type-help" tabindex="0" title="' . $escape($definitionText) . '">?</span>';
+                            }
+                        }
                     }
                     ?>
                 </div>
