@@ -9,14 +9,13 @@ $showValueAnnotations = (bool) $this->fallbackSetting('show_value_annotations', 
 $lang = $this->lang();
 
 $customRelatedPropertyTerm = 'rico:isAssociatedWithEvent';
+$typeTerm = 'dcterms:type';
 
 $relatedTerms = [
     'dcterms:spatial',
     'bf:temporalCoverage',
     'dcterms:type',
 ];
-
-$typeTerm = 'dcterms:type';
 
 $relatedPropertyLabels = [];
 foreach ($relatedTerms as $relatedTerm) {
@@ -34,6 +33,39 @@ $filterLocaleCallback = function ($value) use ($lang) {
     $valueLang = $value->lang();
     return $valueLang === '' || strcasecmp($valueLang, $lang) === 0;
 };
+
+$getDefinitionText = function ($resource) {
+    if (!$resource) {
+        return '';
+    }
+
+    $definitionValues = $resource->value('skos:definition', ['all' => true]);
+    if (!is_array($definitionValues) || empty($definitionValues)) {
+        return '';
+    }
+
+    $definitions = [];
+    foreach ($definitionValues as $definitionValue) {
+        if (is_object($definitionValue) && method_exists($definitionValue, 'asHtml')) {
+            $definitions[] = trim(strip_tags($definitionValue->asHtml()));
+        }
+    }
+
+    return trim(implode("\n", array_filter($definitions)));
+};
+
+$typeTooltip = function ($resource) use ($escape, $getDefinitionText) {
+    $definitionText = $getDefinitionText($resource);
+
+    if ($definitionText === '') {
+        return '';
+    }
+
+    return ' <span class="type-tooltip" tabindex="0" aria-label="' . $escape($definitionText) . '">'
+        . '<span class="type-tooltip-icon">?</span>'
+        . '<span class="type-tooltip-text">' . nl2br($escape($definitionText)) . '</span>'
+        . '</span>';
+};
 ?>
 
 <dl>
@@ -44,9 +76,11 @@ $filterLocaleCallback = function ($value) use ($lang) {
     $showRelatedEventMeta = ($currentPropertyTerm === $customRelatedPropertyTerm);
 
     $propertyValues = $propertyData['values'];
+
     if ($filterLocale) {
         $propertyValues = array_filter($propertyValues, $filterLocaleCallback);
     }
+
     if (empty($propertyValues)) {
         continue;
     }
@@ -82,6 +116,7 @@ $filterLocaleCallback = function ($value) use ($lang) {
             if ($valueType === 'resource' || strpos($valueType, 'resource') !== false) {
                 $classes[] = 'resource';
                 $valueResource = $value->valueResource();
+
                 if ($valueResource) {
                     $classes[] = $escape($valueResource->resourceName());
                 }
@@ -92,7 +127,7 @@ $filterLocaleCallback = function ($value) use ($lang) {
 
             <dd class="<?php echo implode(' ', $classes); ?>" lang="<?php echo $escape($valueLang); ?>">
                 <?php if ($showLocale && $valueLang): ?>
-                    <span class="language"><?php echo $valueLang; ?></span>
+                    <span class="language"><?php echo $escape($valueLang); ?></span>
                 <?php endif; ?>
 
                 <?php if ($valueAnnotation && $showValueAnnotations): ?>
@@ -137,55 +172,35 @@ $filterLocaleCallback = function ($value) use ($lang) {
                             echo '</div>';
 
                             echo '<div class="related-resource-meta">';
+
                             foreach ($visibleRelatedFields as $relatedTerm => $usableValues) {
-    $label = $relatedPropertyLabels[$relatedTerm] ?? $relatedTerm;
-    $definitionText = '';
+                                $label = $relatedPropertyLabels[$relatedTerm] ?? $relatedTerm;
+                                $valueParts = [];
 
-    if ($relatedTerm === $typeTerm) {
-        $definitions = [];
+                                foreach ($usableValues as $relatedValue) {
+                                    $html = $relatedValue->asHtml();
 
-        foreach ($usableValues as $relatedValue) {
-            if (method_exists($relatedValue, 'valueResource') && $relatedValue->valueResource()) {
-                $typeResource = $relatedValue->valueResource();
-                $definitionValues = $typeResource->value('skos:definition', ['all' => true]);
+                                    if (
+                                        $relatedTerm === $typeTerm
+                                        && method_exists($relatedValue, 'valueResource')
+                                        && $relatedValue->valueResource()
+                                    ) {
+                                        $html .= $typeTooltip($relatedValue->valueResource());
+                                    }
 
-                if (is_array($definitionValues)) {
-                    foreach ($definitionValues as $definitionValue) {
-                        if (is_object($definitionValue) && method_exists($definitionValue, 'asHtml')) {
-                            $definitions[] = trim(strip_tags($definitionValue->asHtml()));
-                        }
-                    }
-                }
-            }
-        }
+                                    $valueParts[] = $html;
+                                }
 
-        $definitionText = implode("\n", array_filter($definitions));
+                                if (empty($valueParts)) {
+                                    continue;
+                                }
 
-        if ($definitionText === '') {
-            $definitionText = $translate('No definition available.');
-        }
-    }
+                                echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $relatedTerm) . '">';
+                                echo '<span class="related-label">' . $escape($label) . ':</span> ';
+                                echo '<span class="related-value">' . implode(', ', $valueParts) . '</span>';
+                                echo '</div>';
+                            }
 
-    echo '<div class="related-field related-field-' . str_replace([':', '_'], '-', $relatedTerm) . '">';
-    echo '<span class="related-label">' . $escape($label) . ':</span>';
-
-    if ($relatedTerm === $typeTerm) {
-        echo ' <span class="type-help" tabindex="0" title="' . $escape($definitionText) . '">?</span>';
-    }
-
-    echo ' <span class="related-value">';
-
-    $valueHtml = [];
-    foreach ($usableValues as $relatedValue) {
-        if (is_object($relatedValue) && method_exists($relatedValue, 'asHtml')) {
-            $valueHtml[] = $relatedValue->asHtml();
-        }
-    }
-
-    echo implode(', ', $valueHtml);
-    echo '</span>';
-    echo '</div>';
-}
                             echo '</div>';
                         }
                     }
@@ -193,23 +208,8 @@ $filterLocaleCallback = function ($value) use ($lang) {
                     if (!$renderedCustom) {
                         echo $filterLocale ? $value->asHtml($lang) : $value->asHtml();
 
-                        if ($currentPropertyTerm === 'dcterms:type' && $valueResource) {
-                            $definitionValues = $valueResource->value('skos:definition', ['all' => true]);
-                            $definitions = [];
-
-                            if (is_array($definitionValues)) {
-                                foreach ($definitionValues as $definitionValue) {
-                                    if (is_object($definitionValue) && method_exists($definitionValue, 'asHtml')) {
-                                        $definitions[] = trim(strip_tags($definitionValue->asHtml()));
-                                    }
-                                }
-                            }
-
-                            $definitionText = implode("\n", array_filter($definitions));
-
-                            if ($definitionText !== '') {
-                                echo ' <span class="type-help" tabindex="0" title="' . $escape($definitionText) . '">?</span>';
-                            }
+                        if ($currentPropertyTerm === $typeTerm && $valueResource) {
+                            echo $typeTooltip($valueResource);
                         }
                     }
                     ?>
