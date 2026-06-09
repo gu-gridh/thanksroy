@@ -13,6 +13,7 @@ $this->headScript()->prependFile($this->assetUrl('js/thanksroy.js'));
 $this->headScript()->prependFile($this->assetUrl('js/jquery-accessibleMegaMenu.js'));
 $this->headScript()->prependFile($this->assetUrl('js/global.js', 'Omeka'));
 $this->headScript()->prependFile($this->assetUrl('vendor/jquery/jquery.min.js', 'Omeka'));
+$this->headScript()->appendFile($this->assetUrl('js/advanced-search.js')); // advanced search fixes
 $this->jsTranslate();
 $this->trigger('view.layout');
 $userBar = $this->userBar();
