@@ -16,6 +16,40 @@ const thanksRoySearchFixes = () => {
 
   restoreScrollPosition()
 
+    document.querySelectorAll('input[type="search"], input[name="q"], input.search-query').forEach((input) => {
+    if (input.parentElement?.classList.contains('thanksroy-search-wrapper')) {
+      return
+    }
+
+    const wrapper = document.createElement('span')
+    wrapper.className = 'thanksroy-search-wrapper'
+
+    input.parentNode.insertBefore(wrapper, input)
+    wrapper.appendChild(input)
+
+    const clearButton = document.createElement('button')
+    clearButton.type = 'button'
+    clearButton.className = 'thanksroy-search-clear'
+    clearButton.setAttribute('aria-label', 'Rensa sökning')
+    clearButton.textContent = '×'
+
+    wrapper.appendChild(clearButton)
+
+    const updateClearButton = () => {
+      clearButton.hidden = input.value === ''
+    }
+
+    clearButton.addEventListener('click', () => {
+      input.value = ''
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      input.focus()
+    })
+
+    input.addEventListener('input', updateClearButton)
+
+    updateClearButton()
+  })
+
   document.addEventListener('submit', function () {
     saveScrollPosition()
   }, true)
